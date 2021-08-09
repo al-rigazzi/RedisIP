@@ -3,7 +3,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include<string.h>
+#include <string.h>
+#include <stdlib.h>
 #include "redismodule.h"
 
 int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
@@ -25,13 +26,19 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) 
         return REDISMODULE_OK;
     }
 
-    addr_list = (struct in_addr **) host_entry->h_addr_list;
+    const char* env_redisip = getenv("SS_REDISIP");
+    if (env_redisip != NULL)
+        strcpy(IPbuffer, env_redisip);
+    else {
 
-    for(i = 0; addr_list[i] != NULL; i++)
-    {
-        //Return the first one;
-        strcpy(IPbuffer , inet_ntoa(*addr_list[i]) );
-        break;
+        addr_list = (struct in_addr **) host_entry->h_addr_list;
+
+        for(i = 0; addr_list[i] != NULL; i++)
+        {
+            //Return the first one;
+            strcpy(IPbuffer , inet_ntoa(*addr_list[i]) );
+            break;
+        }
     }
     RedisModule_Log(ctx, "warning", "Hostname: %s", hostbuffer);
     RedisModule_Log(ctx, "warning", "IP: %s", IPbuffer);
